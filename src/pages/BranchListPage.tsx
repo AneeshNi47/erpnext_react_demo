@@ -1,52 +1,64 @@
-import React, { useEffect, useState } from "react";
-
-function erpRequest(path: string, init: RequestInit = {}) {
-  const env: any = (import.meta as any).env || {};
-  const base = String(env.VITE_ERP_BASE_URL || "").replace(/\/$/, "");
-  const auth = (env.VITE_AUTH_METHOD || "session").toLowerCase();
-  const headers: Record<string, string> = {};
-  if (auth === "token" && env.VITE_API_KEY && env.VITE_API_SECRET) {
-    headers.Authorization = `token ${env.VITE_API_KEY}:${env.VITE_API_SECRET}`;
-  }
-  return fetch(`${base}/${path}`, {
-    ...init,
-    headers: { "Content-Type": "application/json", ...headers, ...(init.headers as any) },
-    credentials: auth === "session" ? "include" : "same-origin",
-  }).then(async (r) => {
-    const j = await r.json().catch(() => ({}));
-    if (!r.ok) throw new Error(j?._server_messages || j?.exception || r.statusText);
-    return j;
-  });
-}
+import { useEffect, useState } from "react";
+import { erpFetch } from "../lib/erp-oauth"; // <-- OAuth Bearer client
 
 export default function BranchListPage() {
   const [rows, setRows] = useState<any[]>([]);
   const [q, setQ] = useState("");
   const [loading, setLoading] = useState(true);
+  const [err, setErr] = useState<string | null>(null);
 
   async function load() {
     setLoading(true);
+    setErr(null);
     try {
       const query = new URLSearchParams();
+      // adjust fields to your Branch schema; these are commonly available
       query.set("fields", JSON.stringify(["name", "branch", "branch_name"]));
-      if (q) query.set("filters", JSON.stringify([["Branch", "branch", "like", `%${q}%`]]));
-      const res = await erpRequest(`api/resource/Branch?${query.toString()}`);
+      if (q) {
+        // search by branch or branch_name
+        query.set(
+          "filters",
+          JSON.stringify([
+            ["Branch", "branch", "like", `%${q}%`],
+            "or",
+            ["Branch", "branch_name", "like", `%${q}%`],
+          ])
+        );
+      }
+      const res: any = await erpFetch(`api/resource/Branch?${query.toString()}`);
       setRows(res?.data || []);
-    } finally { setLoading(false); }
+    } catch (e: any) {
+      setErr(e.message || "Failed to load branches");
+      setRows([]);
+    } finally {
+      setLoading(false);
+    }
   }
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className="space-y-3">
       <div className="flex gap-2">
-        <input className="border rounded-xl px-3 py-2 w-full" placeholder="Search branch"
-               value={q} onChange={e=>setQ(e.target.value)} />
-        <button className="px-3 py-2 border rounded-xl" onClick={load}>Search</button>
+        <input
+          className="border rounded-xl px-3 py-2 w-full"
+          placeholder="Search branch"
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+        />
+        <button className="px-3 py-2 border rounded-xl" onClick={load}>
+          Search
+        </button>
       </div>
+
       {loading && <div>Loading…</div>}
+      {err && <div className="text-sm text-red-600">{err}</div>}
+
       <ul className="space-y-2">
-        {rows.map((r) => (
+        {rows.map((r: any) => (
           <li key={r.name} className="border rounded-xl bg-white p-3">
             <div className="font-medium">{r.branch || r.branch_name || r.name}</div>
             <div className="text-xs text-gray-600">Name: {r.name}</div>

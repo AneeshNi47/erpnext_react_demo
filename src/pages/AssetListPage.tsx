@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { erpFetch } from "../lib/erp-oauth"; // <-- OAuth client (adds Authorization: Bearer ...)
 
 export default function AssetListPage() {

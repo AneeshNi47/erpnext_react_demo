@@ -1,4 +1,3 @@
-import React from "react";
 import { makePkcePair } from "../lib/pkce";
 
 const ERP_BASE = String(import.meta.env.VITE_ERP_BASE_URL || "").replace(/\/$/, "");

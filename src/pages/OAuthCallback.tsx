@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { exchangeCodeForToken, setAccessToken, getOpenIdProfile } from "../lib/erp-oauth";
 import { useNavigate } from "react-router-dom";
 
