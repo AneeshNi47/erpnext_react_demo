@@ -1,15 +1,10 @@
-import { configureStore } from '@reduxjs/toolkit';
-import authReducer from '../features/auth/authSlice';
-import { authApi } from '../features/auth/authApi';
-import { assetsApi } from '../features/assets/assetsApi';
+import { configureStore } from "@reduxjs/toolkit";
 
+// No RTK Query reducers/middleware now.
+// If you still have other slices, add them here.
 export const store = configureStore({
-  reducer: {
-    auth: authReducer,
-    [authApi.reducerPath]: authApi.reducer,
-    [assetsApi.reducerPath]: assetsApi.reducer,
-  },
-  middleware: (gDM) => gDM().concat(authApi.middleware, assetsApi.middleware),
+  reducer: {},
+  middleware: (getDefault) => getDefault(),
 });
 
 export type RootState = ReturnType<typeof store.getState>;
